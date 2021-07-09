@@ -1,5 +1,6 @@
 #include <AFMotor.h>
 #include <Servo.h>
+
 #include <StopWatch.h>
 
 #define XLimit 13
@@ -11,7 +12,6 @@
 #define VOLT_PIN_BAT A0
 
 Servo myServo;
-
 StopWatch clock;
 StopWatch ProgramRuntime; 
 
@@ -23,6 +23,11 @@ float numberOfContacts = 0; // number of times a contact was made. based on circ
 float numberOfDrops = 0;    // number of times the drone was lowered.
 float ContactEfficiency;
 int numberOfCycles = 0;
+
+const int val = 50; // sets the motor speed. don't change for now.
+
+bool discharging; // boolean for charging action
+bool discharged;
 
 int Xtime; //set time of movement
 int Ytime;
@@ -72,17 +77,21 @@ void loop()
     rigCycle = true;
   }
 
+
   // cylce while rig cycle is true
-  while (rigCycle == true)
+  while (numberOfProgramCycles <= 2)
   {
     CycleRig();
     numberOfProgramCycles++;
     initialiseRig();
-    if (numberOfProgramCycles == 2)
-    {
-      rigCycle = false;
+    int batvoltage = voltageCheck(VOLT_PIN_BAT);
+    if(batvoltage >= 4.20){
+      Serial.print("Battery voltage is  greater than 4.20 discharge sequence initiated: ");
+      Serial.println(batvoltage);
+      dischargeInitialization();
     }
   }
+  rigCycle = false; 
   
   ProgramRuntime.elapsed();
   Serial.print("Program run time in mili seconds: ");
@@ -231,8 +240,10 @@ void CycleRig()
   for (numberOfCycles; numberOfCycles < 5; numberOfCycles++)
   {
     DroneDropCycle();
+    // drop drone 
+    DroneDrop();
+    // return X and Y to Zero
     returnToZero(Xtime, Ytime);
-
     // run y axis for random amount of time
     YMotor.run(FORWARD);
     Ytime = random(250, 500);
@@ -251,10 +262,13 @@ void CycleRig()
 
     Serial.print("Number of X&Y axis move cycles");
     Serial.println(numberOfCycles);
+    DroneRaise();
   }
   Serial.println(voltageCheck(VOLT_PIN_BAT));
 }
 
+// cycle for the drone drops. This is called once after every move
+// of X and Y 
 void DroneDropCycle()
 {
   int drops;
@@ -328,7 +342,6 @@ void CycleCount()
 // returns the rig back to a starting point for the next cylce.
 void returnToZero(int xtime, int ytime)
 {
-
   XMotor.run(BACKWARD); //Return everything to where it started
   delay(xtime);
   XMotor.run(RELEASE);
@@ -337,4 +350,66 @@ void returnToZero(int xtime, int ytime)
   delay(ytime);
   YMotor.run(RELEASE);
   Serial.println("Everything returned to zero");
+}
+
+
+// Discharge init and run. will stop motor when the voltage has reached cutoff 
+void dischargeInitialization()
+{
+    motorInit();
+    motorBeginDischarge();
+    motorShutdown();
+}
+
+void BatteryCheck()
+{
+    int voltAverage = voltageCheck(VOLT_PIN_BAT);
+    Serial.println(voltAverage);
+    // for loop to check if the average voltage is above the cut off voltage
+    if (voltAverage > 3.98)
+    {                       
+        discharging = true; // set discharging to true
+        Serial.print("discharging set to true: ");
+        Serial.println(discharging);
+        delay(500);
+    }
+    else
+    {
+        discharging = false; //sets discharging to false
+        Serial.print("discharging set to false: ");
+        Serial.println(discharging);
+        delay(500);
+    }
+}
+
+// initialise motor function
+void motorInit()
+{
+    myServo.write(10); // don't change this
+    delay(5000);       // don't change this. Mandatory wait time
+}
+
+// begin motor and set speed.
+void motorBeginDischarge()
+{
+    int motorSpeed = val;
+    BatteryCheck();
+    delay(500);
+    while (discharging == true)
+    {
+        Serial.println("Discharging");
+        myServo.write(motorSpeed);
+        BatteryCheck();
+    }
+    Serial.print("Discharging: ");
+    Serial.print(discharging);
+    Serial.println(" Battery voltage cuttoff reached, shutting down load bank");
+}
+
+// shut down motor
+void motorShutdown()
+{
+    myServo.write(0);
+    discharged = true; // sets discharged bool to true
+    delay(5000);
 }
