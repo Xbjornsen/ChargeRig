@@ -1,6 +1,5 @@
 #include <AFMotor.h>
 #include <Servo.h>
-
 #include <StopWatch.h>
 
 #define XLimit 13
@@ -21,7 +20,7 @@ AF_DCMotor ZMotor(3);
 
 float numberOfContacts = 0; // number of times a contact was made. based on circuit being closed.
 float numberOfDrops = 0;    // number of times the drone was lowered.
-float ContactEfficiency;
+float ContactEfficiency = 0.0;
 int numberOfCycles = 0;
 
 const int val = 50; // sets the motor speed. don't change for now.
@@ -45,6 +44,7 @@ bool YAxisInit = false;
 bool rigInit = false;
 bool rigCycle = false;
 
+//consts
 const int motorSpeed = 255;
 
 void setup()
@@ -121,7 +121,6 @@ void initialiseRig()
     rigInit = true;
     Serial.println("Rig has initialised to true");
   }
-
   if (ZAxisInit == false)
   {
     Serial.print("X axis has initialised to: ");
