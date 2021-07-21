@@ -67,8 +67,7 @@ void setup()
 
   //servo
   myServo.attach(9);
-  myServo.write(0);
-  
+  myServo.write(0);  
 }
 
 void loop()
@@ -83,14 +82,12 @@ void loop()
     rigCycle = true;
   }
 
-
   // cylce while rig cycle is true
   while (rigCycle == true)
   {
     CycleRig();
     numberOfProgramCycles++;
-    initialiseRig();
-    int batvoltage = voltageCheck(VOLT_PIN_BAT);
+    float batvoltage = voltageCheck(VOLT_PIN_BAT);
     if((batvoltage >= 4.15) && (discharged != true)) {
       Serial.print("Battery voltage is greater than 4.20 discharge sequence initiated: ");
       Serial.println(batvoltage);
