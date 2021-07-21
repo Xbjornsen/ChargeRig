@@ -20,8 +20,8 @@ AF_DCMotor ZMotor(3);
 
 float numberOfContacts = 0; // number of times a contact was made. based on circuit being closed.
 float numberOfDrops = 0;    // number of times the drone was lowered.
-float ContactEfficiency = 0.0;
-int numberOfCycles = 0;
+float ContactEfficiency = 0.0; // Contact efficiency 
+int numberOfCycles = 0;  // number of cycles for the rig 
 
 
 bool discharging; // boolean for charging action
@@ -31,10 +31,14 @@ int Xtime; //set time of movement
 int Ytime;
 int Ztime;
 int Dtime;
-int SafeZ; 
+int SafeZ;
+
+//Battery 
+const float voltageMaximum = 4.15; 
+const float voltageMinimum = 3.6; 
 
 // global
-int numberOfProgramCycles;
+int numberOfProgramCycles;  // number of program cylces 
 
 // booleans
 bool XAxisInit = false;
@@ -44,8 +48,8 @@ bool rigInit = false;
 bool rigCycle = false;
 
 //consts
-const int motorSpeed = 255;
-const int motorSpeedRig = 200;
+const int motorSpeed = 255; // DC motor speed for Z axis 
+const int motorSpeedRig = 200; // Dc motor speed for X axis
 const int servoMotorSpeed = 60;
 
 void setup()
@@ -87,30 +91,14 @@ void loop()
   {
     CycleRig();
     numberOfProgramCycles++;
-    float batvoltage = voltageCheck(VOLT_PIN_BAT);
-    if((batvoltage >= 4.15) && (discharged != true)) {
-      Serial.print("Battery voltage is greater than 4.20 discharge sequence initiated: ");
-      Serial.println(batvoltage);
-      dischargeInitialization();
-    }
-    if (discharged = true)
-    {
-      DroneDrop(); 
-      float checkVolts = voltageCheck(VOLT_PIN_BAT);
-      while(checkVolts <= 4.15)
-      {
-        Serial.print("Charging battery, voltage reading: ");
-        Serial.println(checkVolts);
-      }
-      DroneRaise();
-      discharged = false;
-    }
+    BatteryStatus(); 
     if(numberOfProgramCycles == 5 )
     {
       rigCycle = false; 
     }
+    Serial.print("Program cylce: ");
+    Serial.println(numberOfProgramCycles);
   }
-  
   
   ProgramRuntime.elapsed();
   Serial.print("Program run time in mili seconds: ");
@@ -129,7 +117,7 @@ void loop()
     Serial.print("Number of crops on the rail: ");
     Serial.println(numberOfDrops);
     ProgramRuntime.stop();
-    while (1 ==1 ) {};
+    while (1==1 ) {};
   }
 }
 
@@ -199,7 +187,7 @@ void initialiseZAxis()
   ZMotor.run(BACKWARD);
   delay(SafeZ);
   ZMotor.run(RELEASE);
-  Serial.println(" z axis should be now just off the rail");
+  Serial.println(" Z axis should be now just off the rail");
 }
 
 // initializes X axis using Zlimit switch
@@ -255,13 +243,12 @@ void initialiseYAxis()
 void CycleRig()
 {
   Serial.println("Cycling rig for random amounts of time for x and y axis");
-  
-  int XandYCycle = 0;
-  for (XandYCycle; XandYCycle < 10; XandYCycle++)
+
+  for (int XandYCycle = 0; XandYCycle < 10; XandYCycle++)
   {
     DroneDropCycle();
     // return X and Y to Zero
-    returnToZero(Xtime, Ytime);
+    ReturnToZero(Xtime, Ytime);
     // run y axis for random amount of time
     YMotor.setSpeed(motorSpeedRig);
     YMotor.run(FORWARD);
@@ -291,9 +278,7 @@ void CycleRig()
 // of X and Y 
 void DroneDropCycle()
 {
-  int drops;
-  //drop drone 10 times then move x and y
-  for (drops = 0; drops < 10; drops++)
+  for (int drops = 0; drops < 10; drops++)
   {
     DroneDrop();
     numberOfDrops++; // count global amount of drops
@@ -304,13 +289,14 @@ void DroneDropCycle()
 // lower drone onto the charging rail
 void DroneDrop()
 {
+  float rasiedVoltage = voltageCheck(VOLT_PIN_BAT);
   int DLowerLimit = digitalRead(DLimit);
   while (digitalRead(DLimit) == HIGH)
   {
     ZMotor.run(FORWARD);
   }
   ZMotor.run(RELEASE);
-  CycleCount();
+  CycleCount(rasiedVoltage);
 }
 
 // raise Drone from the rail. 
@@ -330,9 +316,10 @@ float voltageCheck(int valueIn)
   value = analogRead( valueIn ); 
   volt = value * 5.0 / 1023.0;
 
+  // looping 10 times
   for (int i = 0; i < 10; i++)
   {
-    voltAverage = voltAverage + volt; // concatinates
+    voltAverage = voltAverage + volt; 
   }
   voltAverage = voltAverage / 10; // calculates the agerage voltage
   float voltageAdjustment = 0.10;
@@ -342,11 +329,40 @@ float voltageCheck(int valueIn)
   return voltAverage;
 }
 
+// function to determine if the battery should be discharged or charged
+void BatteryStatus() {
+    float batVoltage = voltageCheck(VOLT_PIN_BAT);
+    Serial.print("Battery voltage at: ");
+    Serial.println(batVoltage);
+    if((batVoltage >= voltageMaximum) && (discharged == false)) {
+      Serial.print("Battery voltage equals voltage maximum, discharge sequence initiated: ");
+      Serial.println(batVoltage);
+      dischargeInitialization();
+    }
+    if (discharged = true)
+    {
+      DroneDrop();
+      while(batVoltage <= voltageMaximum)
+      {
+        Serial.print("Charging battery, voltage reading: ");
+        Serial.println(batVoltage);
+      }
+      DroneRaise();
+      Serial.println("Batttery charge continuing rig cylce ");
+      discharged = false;
+    }
+}
+
 // Counts the number of cylces where there was good contact.
-void CycleCount()
+void CycleCount(int raisedVoltage)
 {
-  float ContactClosed = voltageCheck(VOLT_PIN_BAT);
-  if (ContactClosed >= 4.20)
+  float ContactVoltage = voltageCheck(VOLT_PIN_BAT);
+  delay(2000);
+  Serial.print("Rasied voltage");
+  Serial.println(raisedVoltage);
+  Serial.print("Contact volatge: ");
+  Serial.println(ContactVoltage);
+  if (ContactVoltage > raisedVoltage)
   {
     numberOfContacts++;
   }
@@ -354,18 +370,17 @@ void CycleCount()
   Serial.println(numberOfCycles);
   Serial.print("Contact Count: ");
   Serial.println(numberOfContacts);
-  ContactEfficiency = ((numberOfDrops / numberOfContacts ) * 100);
+  ContactEfficiency = ((numberOfContacts / numberOfDrops ) * 100);
   Serial.print("Contact Efficiency %: ");
   Serial.println(ContactEfficiency);
 }
 
 // returns the rig back to a starting point for the next cylce.
-void returnToZero(int xtime, int ytime)
+void ReturnToZero(int xtime, int ytime)
 {
   XMotor.run(BACKWARD); //Return everything to where it started
   delay(xtime);
   XMotor.run(RELEASE);
-
   YMotor.run(BACKWARD);
   delay(ytime);
   YMotor.run(RELEASE);
@@ -373,51 +388,49 @@ void returnToZero(int xtime, int ytime)
 }
 
 
-// Discharge init and run. will stop motor when the voltage has reached cutoff 
+// Discharge init and run. Will stop discharge bank when the voltage has reached cutoff 
 void dischargeInitialization()
 {
-    motorInit();
-    motorBeginDischarge();
-    motorShutdown();
+    DischargeBankInit();
+    DischargeBankDischarge();
+    DischargeBankShutdown();
 }
 
-void BatteryCheck()
+// checks the battery voltage and determines if discharging is needed
+void BatteryCheckDischarge()
 {
     int voltAverage = voltageCheck(VOLT_PIN_BAT);
     Serial.println(voltAverage);
-    // for loop to check if the average voltage is above the cut off voltage
-    if (voltAverage > 3.7)
+    // if loop to check if the average voltage is above the cut off voltage
+    if (voltAverage > voltageMinimum)
     {                       
         discharging = true; // set discharging to true
         Serial.print("discharging set to true: ");
         Serial.println(discharging);
-    }
-    else
-    {
+    } else {
         discharging = false; //sets discharging to false
         Serial.print("discharging set to false: ");
-        Serial.println(discharging);
-        
+        Serial.println(discharging);       
     }
-}
+} 
 
 // initialise motor function
-void motorInit()
+void DischargeBankInit()
 {
     myServo.write(10); // don't change this
     delay(5000);       // don't change this. Mandatory wait time
 }
 
 // begin motor and set speed.
-void motorBeginDischarge()
+void DischargeBankDischarge()
 {
-    BatteryCheck();
+    BatteryCheckDischarge();
     Serial.print("entering while loop ");
     while (discharging == true)
     {
         Serial.println("Discharging");
         myServo.write(servoMotorSpeed);
-        BatteryCheck();
+        BatteryCheckDischarge();
     }
     Serial.print("Discharging: ");
     Serial.print(discharging);
@@ -425,9 +438,9 @@ void motorBeginDischarge()
 }
 
 // shut down motor
-void motorShutdown()
+void DischargeBankShutdown()
 {
     myServo.write(0);
     discharged = true; // sets discharged bool to true
-    delay(5000);
+    Serial.println("Shut down load bank, discharged set to true");
 }
