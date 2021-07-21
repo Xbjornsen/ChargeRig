@@ -50,7 +50,7 @@ bool rigCycle = false;
 //consts
 const int motorSpeed = 255; // DC motor speed for Z axis 
 const int motorSpeedRig = 200; // Dc motor speed for X axis
-const int servoMotorSpeed = 60;
+const int servoMotorSpeed = 55;
 
 void setup()
 {
@@ -364,12 +364,8 @@ float voltageCheck(int valueIn)
     voltAverage = voltAverage + volt; 
   }
   voltAverage = voltAverage / 10; // calculates the agerage voltage
-  float voltageAdjustment = 0.10;
-  Serial.print("volts average before the adjustmetn: ");
-  Serial.println(voltAverage);
+  float voltageAdjustment = 0.12;
   voltAverage = voltAverage - voltageAdjustment;
-  Serial.print("Volt average in check voltage function after adjustment: ");
-  Serial.println(voltAverage);
   return voltAverage;
 }
 
@@ -389,6 +385,7 @@ void BatteryStatus() {
       float checkCharge = voltageCheck(VOLT_PIN_BAT);
       while(checkCharge <= voltageMaximum)
       {
+        float checkCharge = voltageCheck(VOLT_PIN_BAT);
         Serial.print("Charging battery, voltage reading: ");
         Serial.println(checkCharge);    
       }
