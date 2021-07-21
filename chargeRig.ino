@@ -77,7 +77,7 @@ void setup()
 void loop()
 {
   ProgramRuntime.start();
-  // check if rig is initialised
+  // Check if rig is initialised
   if (rigInit == false)
   {
     initialiseRig();
@@ -86,7 +86,7 @@ void loop()
     rigCycle = true;
   }
 
-  // cylce while rig cycle is true
+  // Cycle while rig cycle is true
   while (rigCycle == true)
   {
     CycleRig();
@@ -96,7 +96,7 @@ void loop()
     {
       rigCycle = false; 
     }
-    Serial.print("Program cylce: ");
+    Serial.print("Program cycle: ");
     Serial.println(numberOfProgramCycles);
   }
   
@@ -110,17 +110,18 @@ void loop()
     Serial.println(ProgramRuntime.elapsed()/1000);
     Serial.print("In minutes: ");
     Serial.println(ProgramRuntime.elapsed()/60000);
-    Serial.print("Number of success contacts made: ");
+    Serial.print("Number of successful contacts made: ");
     Serial.println(numberOfContacts);
-    Serial.print("Number of Cylces where X and Y was changed: ");
+    Serial.print("Number of Cycles where X and Y was changed: ");
     Serial.println(numberOfCycles);
-    Serial.print("Number of crops on the rail: ");
+    Serial.print("Number of drops on the rail: ");
     Serial.println(numberOfDrops);
     ProgramRuntime.stop();
     while (1==1 ) {};
   }
 }
 
+/*#################### Initialize Rig Section ######################*/
 void initialiseRig()
 {
   if ((ZAxisInit == true) && (XAxisInit == true) && (YAxisInit == true))
@@ -240,6 +241,7 @@ void initialiseYAxis()
   }
 }
 
+/*#################### Rig Cylce Section ######################*/
 void CycleRig()
 {
   Serial.println("Cycling rig for random amounts of time for x and y axis");
@@ -271,7 +273,7 @@ void CycleRig()
     Serial.println(XandYCycle);
     numberOfCycles++; 
   }
-  Serial.println(voltageCheck(VOLT_PIN_BAT));
+  ReturnToZero(Xtime, Ytime);
 }
 
 // cycle for the drone drops. This is called once after every move
@@ -307,6 +309,46 @@ void DroneRaise()
   ZMotor.run(RELEASE);
 }
 
+// Counts the number of cylces where there was good contact.
+void CycleCount(float raisedVoltage)
+{
+  float ContactVoltage = voltageCheck(VOLT_PIN_BAT);
+  delay(1000);
+  Serial.print("Rasied voltage: ");
+  Serial.println(raisedVoltage);
+  Serial.print("Contact volatge: ");
+  Serial.println(ContactVoltage);
+  if (ContactVoltage != raisedVoltage)
+  {
+    numberOfContacts++;
+  }
+  Serial.print("Number of drops: ");
+  Serial.println(numberOfDrops);
+  Serial.print("Cycle Count: ");
+  Serial.println(numberOfCycles);
+  Serial.print("Contact Count: ");
+  Serial.println(numberOfContacts);
+  ContactEfficiency = ((numberOfContacts / numberOfDrops ) * 100);
+  Serial.print("Contact Efficiency %: ");
+  Serial.println(ContactEfficiency);
+}
+
+// returns the rig back to a starting point for the next cylce.
+void ReturnToZero(int xtime, int ytime)
+{
+  XMotor.run(BACKWARD); //Return everything to where it started
+  delay(xtime);
+  XMotor.run(RELEASE);
+  YMotor.run(BACKWARD);
+  delay(ytime);
+  YMotor.run(RELEASE);
+  Serial.println("Everything returned to zero");
+}
+
+
+
+/*#################### Voltage Section ######################*/
+
 // calculates the voltage average from analogue pin
 float voltageCheck(int valueIn)
 {
@@ -323,6 +365,8 @@ float voltageCheck(int valueIn)
   }
   voltAverage = voltAverage / 10; // calculates the agerage voltage
   float voltageAdjustment = 0.10;
+  Serial.print("volts average before the adjustmetn: ");
+  Serial.println(voltAverage);
   voltAverage = voltAverage - voltageAdjustment;
   Serial.print("Volt average in check voltage function after adjustment: ");
   Serial.println(voltAverage);
@@ -346,48 +390,16 @@ void BatteryStatus() {
       while(checkCharge <= voltageMaximum)
       {
         Serial.print("Charging battery, voltage reading: ");
-        Serial.println(checkCharge);
+        Serial.println(checkCharge);    
       }
       DroneRaise();
-      Serial.println("Batttery charge continuing rig cylce ");
+      Serial.println("Batttery charged will continue with rig cycle ");
       discharged = false;
     }
 }
 
-// Counts the number of cylces where there was good contact.
-void CycleCount(float raisedVoltage)
-{
-  float ContactVoltage = voltageCheck(VOLT_PIN_BAT);
-  delay(2000);
-  Serial.print("Rasied voltage: ");
-  Serial.println(raisedVoltage);
-  Serial.print("Contact volatge: ");
-  Serial.println(ContactVoltage);
-  if (ContactVoltage > raisedVoltage)
-  {
-    numberOfContacts++;
-  }
-  Serial.print("Cycle Count: ");
-  Serial.println(numberOfCycles);
-  Serial.print("Contact Count: ");
-  Serial.println(numberOfContacts);
-  ContactEfficiency = ((numberOfContacts / numberOfDrops ) * 100);
-  Serial.print("Contact Efficiency %: ");
-  Serial.println(ContactEfficiency);
-}
 
-// returns the rig back to a starting point for the next cylce.
-void ReturnToZero(int xtime, int ytime)
-{
-  XMotor.run(BACKWARD); //Return everything to where it started
-  delay(xtime);
-  XMotor.run(RELEASE);
-  YMotor.run(BACKWARD);
-  delay(ytime);
-  YMotor.run(RELEASE);
-  Serial.println("Everything returned to zero");
-}
-
+/*#################### Discharge Section ######################*/
 
 // Discharge init and run. Will stop discharge bank when the voltage has reached cutoff 
 void dischargeInitialization()
@@ -401,28 +413,28 @@ void dischargeInitialization()
 void BatteryCheckDischarge()
 {
     float voltAverage = voltageCheck(VOLT_PIN_BAT);
-    Serial.println(voltAverage);
     // if loop to check if the average voltage is above the cut off voltage
     if (voltAverage > voltageMinimum)
     {                       
         discharging = true; // set discharging to true
-        Serial.print("discharging set to true: ");
+        Serial.print("Discharging set to true: ");
         Serial.println(discharging);
     } else {
         discharging = false; //sets discharging to false
-        Serial.print("discharging set to false: ");
+        Serial.print("Discharging set to false: ");
         Serial.println(discharging);       
     }
 } 
 
-// initialise motor function
+// Initialise motor function
 void DischargeBankInit()
 {
+    Serial.println("Initialising discharge motor");
     myServo.write(10); // don't change this
     delay(5000);       // don't change this. Mandatory wait time
 }
 
-// begin motor and set speed.
+// Discharge bank start and set speed.
 void DischargeBankDischarge()
 {
     BatteryCheckDischarge();
@@ -438,7 +450,7 @@ void DischargeBankDischarge()
     Serial.println(" Battery voltage cuttoff reached, shutting down load bank");
 }
 
-// shut down motor
+// shut down discharge bank 
 void DischargeBankShutdown()
 {
     myServo.write(0);
