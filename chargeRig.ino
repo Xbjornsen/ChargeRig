@@ -34,7 +34,7 @@ int Dtime;
 int SafeZ;
 
 //Battery 
-const float voltageMaximum = 4.15; 
+const float voltageMaximum = 4.10; 
 const float voltageMinimum = 3.6; 
 
 // global
@@ -244,7 +244,7 @@ void CycleRig()
 {
   Serial.println("Cycling rig for random amounts of time for x and y axis");
 
-  for (int XandYCycle = 0; XandYCycle < 10; XandYCycle++)
+  for (int XandYCycle = 0; XandYCycle < 5; XandYCycle++)
   {
     DroneDropCycle();
     // return X and Y to Zero
@@ -342,10 +342,11 @@ void BatteryStatus() {
     if (discharged = true)
     {
       DroneDrop();
-      while(batVoltage <= voltageMaximum)
+      float checkCharge = voltageCheck(VOLT_PIN_BAT);
+      while(checkCharge <= voltageMaximum)
       {
         Serial.print("Charging battery, voltage reading: ");
-        Serial.println(batVoltage);
+        Serial.println(checkCharge);
       }
       DroneRaise();
       Serial.println("Batttery charge continuing rig cylce ");
@@ -354,11 +355,11 @@ void BatteryStatus() {
 }
 
 // Counts the number of cylces where there was good contact.
-void CycleCount(int raisedVoltage)
+void CycleCount(float raisedVoltage)
 {
   float ContactVoltage = voltageCheck(VOLT_PIN_BAT);
   delay(2000);
-  Serial.print("Rasied voltage");
+  Serial.print("Rasied voltage: ");
   Serial.println(raisedVoltage);
   Serial.print("Contact volatge: ");
   Serial.println(ContactVoltage);
@@ -399,7 +400,7 @@ void dischargeInitialization()
 // checks the battery voltage and determines if discharging is needed
 void BatteryCheckDischarge()
 {
-    int voltAverage = voltageCheck(VOLT_PIN_BAT);
+    float voltAverage = voltageCheck(VOLT_PIN_BAT);
     Serial.println(voltAverage);
     // if loop to check if the average voltage is above the cut off voltage
     if (voltAverage > voltageMinimum)
