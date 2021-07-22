@@ -87,18 +87,18 @@ void loop()
   }
 
   // Cycle while rig cycle is true
-  while (rigCycle == true)
+  while (numberOfProgramCycles <= 5)
   {
     CycleRig();
     numberOfProgramCycles++;
-    BatteryStatus(); 
-    if(numberOfProgramCycles == 5 )
+    if(numberOfProgramCycles == 3 )
     {
-      rigCycle = false; 
+      BatteryStatus();   
     }
     Serial.print("Program cycle: ");
     Serial.println(numberOfProgramCycles);
   }
+  rigCycle = false; 
   
   ProgramRuntime.elapsed();
   Serial.print("Program run time in mili seconds: ");
@@ -248,9 +248,7 @@ void CycleRig()
 
   for (int XandYCycle = 0; XandYCycle < 5; XandYCycle++)
   {
-    DroneDropCycle();
-    // return X and Y to Zero
-    ReturnToZero(Xtime, Ytime);
+
     // run y axis for random amount of time
     YMotor.setSpeed(motorSpeedRig);
     YMotor.run(FORWARD);
@@ -269,11 +267,14 @@ void CycleRig()
     Serial.print("X axis moved by: ");
     Serial.println(Xtime);
 
+    DroneDropCycle();
+        // return X and Y to Zero
+    ReturnToZero(Xtime, Ytime);
+
     Serial.print("Number of X&Y axis move cycles ");
     Serial.println(XandYCycle);
     numberOfCycles++; 
   }
-  ReturnToZero(Xtime, Ytime);
 }
 
 // cycle for the drone drops. This is called once after every move
@@ -378,8 +379,10 @@ void BatteryStatus() {
       Serial.print("Battery voltage equals voltage maximum, discharge sequence initiated: ");
       Serial.println(batVoltage);
       dischargeInitialization();
+      discharged == true;
     }
-    if (discharged = true)
+
+    if (discharged == true)
     {
       DroneDrop();
       float checkCharge = voltageCheck(VOLT_PIN_BAT);
@@ -451,6 +454,5 @@ void DischargeBankDischarge()
 void DischargeBankShutdown()
 {
     myServo.write(0);
-    discharged = true; // sets discharged bool to true
     Serial.println("Shut down load bank, discharged set to true");
 }
