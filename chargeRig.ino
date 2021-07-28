@@ -193,12 +193,12 @@ void initialiseRig()
 void initialiseZAxis()
 {
   int ZUpperLimit = digitalRead(ZLimit);
-  while (ZUpperLimit == HIGH)
+  while (digitalRead(ZLimit) == HIGH)
   {
     ZUpperLimit = digitalRead(ZLimit);
     Serial.println("Raising Drone");
     ZMotor.run(BACKWARD);
-    Serial.print(" Z axis: ");
+    Serial.print("Z axis: ");
     Serial.println(ZUpperLimit);
   }
   Serial.println("Drone reached height limit");
@@ -221,7 +221,7 @@ void initialiseZAxis()
   ZMotor.run(BACKWARD);
   delay(SafeZ);
   ZMotor.run(RELEASE);
-  Serial.println(" Z axis should be now just off the rail");
+  Serial.println("Z axis should be now just off the rail");
 }
 
 // initializes X axis using Zlimit switch
