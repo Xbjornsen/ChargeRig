@@ -112,25 +112,25 @@ void loop()
   rigCycle = false;
 
   ProgramRuntime.elapsed();
-  Serial.print("Program run time in mili seconds: ");
-  Serial.println(ProgramRuntime.elapsed());
+  Serial.print("Program run time in minutes: ");
+  Serial.println(ProgramRuntime.MINUTES);
   // program ends
   if ((rigInit == true) && (rigCycle == false))
   {
     Serial.println("###################################");
     Serial.print("Rig cylce was completed in seconds: ");
-    Serial.println(ProgramRuntime.elapsed() / 1000);
+    Serial.println(ProgramRuntime.SECONDS);
     Serial.print("In minutes: ");
-    Serial.println(ProgramRuntime.elapsed() / 60000);
+    Serial.println(ProgramRuntime.MINUTES);
     Serial.print("Number of successful contacts made: ");
     Serial.println(healthyContact);
     Serial.print("Number of Cycles where X and Y was changed: ");
     Serial.println(numberOfCycles);
     Serial.print("Number of drops on the rail: ");
     Serial.println(numberOfDrops);
-    Serial.print("Time to discharge battery");
+    Serial.print("Time to discharge battery: ");
     Serial.println(batteryDischargeTimeElapsed);
-    Serial.print("Time to charge battery ");
+    Serial.print("Time to charge battery: ");
     Serial.println(batteryChargeTimeElapsed);
     for(int i =0; i<30; i++){
       Serial.print(UnhealthyContactCoorsX[i]);
@@ -193,7 +193,7 @@ void initialiseRig()
 void initialiseZAxis()
 {
   int ZUpperLimit = digitalRead(ZLimit);
-  while (digitalRead(ZLimit) == HIGH)
+  while (ZUpperLimit == HIGH)
   {
     ZUpperLimit = digitalRead(ZLimit);
     Serial.println("Raising Drone");
@@ -365,7 +365,7 @@ void CycleCount(float raisedVoltage)
   Serial.println(numberOfCycles);
   Serial.print("Healthy contact Count: ");
   Serial.println(healthyContact);
-  Serial.print("Unhealthy contact count");
+  Serial.print("Unhealthy contact count: ");
   Serial.println(unhealthyContact);
   ContactEfficiency = ((healthyContact / numberOfDrops) * 100);
   Serial.print("Contact Efficiency %: ");
@@ -423,7 +423,7 @@ void BatteryStatus()
     batteryDischargeTimeElapsed = BatteryChargeTime.MINUTES;
   }
 
-  if (discharged == true)
+  if ((discharged == true) || (batVoltage < voltageMaximum))
   {
     BatteryChargeTime.start();
     DroneDrop();
