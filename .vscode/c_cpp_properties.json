@@ -17,9 +17,9 @@
             "includePath": [
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\standard",
-                "C:\\Users\\USER\\Documents\\Arduino\\libraries\\Adafruit_Motor_Shield_library",
-                "C:\\Users\\USER\\Documents\\Arduino\\libraries\\Servo\\src",
-                "C:\\Users\\USER\\Documents\\Arduino\\libraries\\StopWatch_RT",
+                "C:\\Users\\Xman\\Documents\\Arduino\\libraries\\Adafruit_Motor_Shield_library",
+                "C:\\Users\\Xman\\Documents\\Arduino\\libraries\\Servo\\src",
+                "C:\\Users\\Xman\\Documents\\Arduino\\libraries\\StopWatch_RT",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\7.3.0\\include",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\7.3.0\\include-fixed",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\avr\\include"
