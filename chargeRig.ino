@@ -221,7 +221,7 @@ void initialiseZAxis()
   ZMotor.run(BACKWARD);
   delay(SafeZ);
   ZMotor.run(RELEASE);
-  Serial.println(" Z axis should be now just off the rail");
+  Serial.println(" z axis should be now just off the rail");
 }
 
 // initializes X axis using Zlimit switch
