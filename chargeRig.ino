@@ -407,35 +407,33 @@ void BatteryStatus()
   float batVoltage = voltageCheck(VOLT_PIN_BAT);
   Serial.print("Battery voltage at: ");
   Serial.println(batVoltage);
-  if ((batVoltage >= voltageMaximum) && (discharged == false))
+  if (batVoltage >= voltageMaximum)
   {
     BatteryDischargeTime.start();
     Serial.print("Battery voltage equals voltage maximum, discharge sequence initiated: ");
     Serial.println(batVoltage);
     dischargeInitialization();
-    discharged == true;
     BatteryDischargeTime.stop();
     batteryDischargeTimeElapsed = BatteryChargeTime.MINUTES;
   }
 
-  if ((discharged == true) || (batVoltage < voltageMaximum))
+  if (batVoltage < voltageMaximum)
   {
     BatteryChargeTime.start();
     DroneDrop();
-    float checkCharge = voltageCheck(VOLT_PIN_BAT);
-    while (checkCharge < voltageMaximum)
+    while (voltageCheck(VOLT_PIN_BAT) < voltageMaximum)
     {
       float checkCharge = voltageCheck(VOLT_PIN_BAT);
       Serial.print("Charging battery, voltage reading: ");
       Serial.println(checkCharge);
     }
-    BatteryChargeTime.stop();
-    batteryChargeTimeElapsed = BatteryChargeTime.MINUTES;
+    
+    batteryChargeTimeElapsed = BatteryChargeTime.elapsed();
     Serial.print("Time taken to charge the battery: ");
     Serial.println(batteryChargeTimeElapsed);
+    BatteryChargeTime.stop();
     DroneRaise();
     Serial.println("Battery charged will continue with rig cycle ");
-    discharged = false;
   }
 }
 
@@ -465,8 +463,7 @@ void DischargeBankControl()
   {
     Serial.println("Discharging");
     myServo.write(servoMotorSpeed);
-    float voltAverage = voltageCheck(VOLT_PIN_BAT);
-  } while (voltAverage > voltageMinimum);
+  } while (voltageCheck(VOLT_PIN_BAT) > voltageMinimum);
 }
 
 // shut down discharge bank
