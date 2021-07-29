@@ -24,9 +24,9 @@ AF_DCMotor XMotor(1); //declare which motors are attached to which outlets on th
 AF_DCMotor YMotor(2);
 AF_DCMotor ZMotor(3);
 
-float healthyContact = 0.0;      // number of times a healthy contact was made. based on circuit being closed.
-float unhealthyContact = 0.0;    // number of times an unhealthy contact was made.
-float numberOfDrops = 0.0;       // number of times the drone was lowered.
+float healthyContact = 0.0;    // number of times a healthy contact was made. based on circuit being closed.
+float unhealthyContact = 0.0;  // number of times an unhealthy contact was made.
+float numberOfDrops = 0.0;     // number of times the drone was lowered.
 float ContactEfficiency = 0.0; // Contact efficiency
 float batteryChargeTimeElapsed = 0.0;
 float batteryDischargeTimeElapsed = 0.0;
@@ -56,9 +56,6 @@ const float voltageMinimum = 3.6;
 int numberOfProgramCycles; // number of program cylces
 
 // booleans
-bool XAxisInit = false;
-bool ZAxisInit = false;
-bool YAxisInit = false;
 bool rigInit = false;
 bool rigCycle = false;
 
@@ -109,26 +106,29 @@ void loop()
     Serial.print("Program cycle: ");
     Serial.println(numberOfProgramCycles);
   }
-  rigCycle = false; 
+
   Serial.print("Program run time in minutes: ");
   Serial.println(ProgramRuntime.elapsed());
   ProgramRuntime.stop();
   // program ends
-  if (rigCycle == false)
+  Serial.println("###################################");
+  Serial.print("In minutes: ");
+  Serial.println(ProgramRuntime.elapsed());
+  Serial.print("Number of successful contacts made: ");
+  Serial.println(healthyContact);
+  Serial.print("Number of Cycles where X and Y was changed: ");
+  Serial.println(numberOfCycles);
+  Serial.print("Number of drops on the rail: ");
+  Serial.println(numberOfDrops);
+  Serial.print("Time to discharge battery: ");
+  Serial.println(batteryDischargeTimeElapsed);
+  Serial.print("Time to charge battery: ");
+  Serial.println(batteryChargeTimeElapsed);
+  Serial.print("Coordinates of unhealthy contacts");
+  for(int i= 0; i<unhealthyContact; i++)
   {
-    Serial.println("###################################");
-    Serial.print("In minutes: ");
-    Serial.println(ProgramRuntime.elapsed());
-    Serial.print("Number of successful contacts made: ");
-    Serial.println(healthyContact);
-    Serial.print("Number of Cycles where X and Y was changed: ");
-    Serial.println(numberOfCycles);
-    Serial.print("Number of drops on the rail: ");
-    Serial.println(numberOfDrops);
-    Serial.print("Time to discharge battery: ");
-    Serial.println(batteryDischargeTimeElapsed);
-    Serial.print("Time to charge battery: ");
-    Serial.println(batteryChargeTimeElapsed);
+    Serial.println(UnhealthyContactCoorsX[i]);
+    Serial.println(UnhealthyContactCoorsY[i]);
   }
   while (1 == 1)
   {
@@ -192,50 +192,42 @@ void InitialiseZAxis()
 void InitialiseXAxis()
 {
   int XRightLimit = digitalRead(XLimit);
-  if (XAxisInit == false)
+  while (digitalRead(XLimit) == HIGH)
   {
-    while (digitalRead(XLimit) == HIGH)
-    {
-      XRightLimit = digitalRead(XLimit);
-      Serial.println("Initialising X axis: ");
-      XMotor.run(FORWARD);
-      Serial.print(" X axis: ");
-      Serial.println(XRightLimit);
-    }
-    XMotor.run(RELEASE);
-    Serial.println("At limit switch");
-    XMotor.run(BACKWARD);
-    Serial.println("X axis to centre");
-    delay(2000);
-    XMotor.run(RELEASE);
-    XAxisInit = true;
-    Serial.println("X Initialisation Complete");
+    XRightLimit = digitalRead(XLimit);
+    Serial.println("Initialising X axis: ");
+    XMotor.run(FORWARD);
+    Serial.print(" X axis: ");
+    Serial.println(XRightLimit);
   }
+  XMotor.run(RELEASE);
+  Serial.println("At limit switch");
+  XMotor.run(BACKWARD);
+  Serial.println("X axis to centre");
+  delay(2000);
+  XMotor.run(RELEASE);
+  Serial.println("X Initialisation Complete");
 }
 
 void InitialiseYAxis()
 {
   int YBackLimit = digitalRead(YLimit);
-  if (YAxisInit == false)
+  while (digitalRead(YLimit) != LOW)
   {
-    while (digitalRead(YLimit) != LOW)
-    {
-      YBackLimit = digitalRead(YLimit);
-      Serial.println("Setting y limit");
-      YMotor.run(FORWARD);
-      Serial.print("Y axis: ");
-      Serial.println(YBackLimit);
-    }
-    Serial.println("At Y limit switch");
-    YMotor.run(RELEASE);
-    Serial.println("Y axis to centre");
-    YMotor.run(BACKWARD);
-    Serial.println("Centering");
-    delay(2000);
-    YMotor.run(RELEASE);
-    Serial.println("Y Initialisation Complete");
-    YAxisInit = true;
+    YBackLimit = digitalRead(YLimit);
+    Serial.println("Setting y limit");
+    YMotor.run(FORWARD);
+    Serial.print("Y axis: ");
+    Serial.println(YBackLimit);
   }
+  Serial.println("At Y limit switch");
+  YMotor.run(RELEASE);
+  Serial.println("Y axis to centre");
+  YMotor.run(BACKWARD);
+  Serial.println("Centering");
+  delay(2000);
+  YMotor.run(RELEASE);
+  Serial.println("Y Initialisation Complete");
 }
 
 /*#################### Rig Cylce Section ######################*/
@@ -308,13 +300,14 @@ void DroneRaise()
 void CycleCount(float raisedVoltage)
 {
   float ContactVoltage;
-  for(int i =0; i<500; i++ ){
+  for (int i = 0; i < 500; i++)
+  {
     ContactVoltage += voltageCheck(VOLT_PIN_BAT);
   }
   Serial.print("Raised voltage: ");
   Serial.println(raisedVoltage);
   Serial.print("Contact volatge: ");
-  Serial.println(ContactVoltage/500);
+  Serial.println(ContactVoltage / 500);
   if (ContactVoltage > raisedVoltage)
   {
     healthyContact++;
@@ -397,7 +390,7 @@ void BatteryStatus()
       Serial.print("Charging battery, voltage reading: ");
       Serial.println(voltageCheck(VOLT_PIN_BAT));
     }
-    
+
     batteryChargeTimeElapsed = BatteryChargeTime.elapsed();
     Serial.print("Time taken to charge the battery: ");
     Serial.println(batteryChargeTimeElapsed);
