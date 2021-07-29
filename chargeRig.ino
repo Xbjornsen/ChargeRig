@@ -114,6 +114,7 @@ void loop()
   ProgramRuntime.elapsed();
   Serial.print("Program run time in minutes: ");
   Serial.println(ProgramRuntime.MINUTES);
+  ProgramRuntime.stop();
   // program ends
   if ((rigInit == true) && (rigCycle == false))
   {
@@ -132,16 +133,10 @@ void loop()
     Serial.println(batteryDischargeTimeElapsed);
     Serial.print("Time to charge battery: ");
     Serial.println(batteryChargeTimeElapsed);
-    for(int i =0; i<30; i++){
-      Serial.print(UnhealthyContactCoorsX[i]);
-      Serial.print(UnhealthyContactCoorsY[i]);
-      Serial.print(", ");
-    }
-    ProgramRuntime.stop();
-    while (1 == 1)
-    {
-    };
   }
+  while (1 == 1)
+  {
+  };
 }
 
 // initialise array with coordinates
@@ -164,7 +159,7 @@ void initialiseRig()
   }
   if (ZAxisInit == false)
   {
-    Serial.print("X axis has initialised to: ");
+    Serial.print("Z axis has initialised to: ");
     Serial.println(ZAxisInit);
     initialiseZAxis();
     ZAxisInit = true;
