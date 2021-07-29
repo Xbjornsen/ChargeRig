@@ -24,9 +24,9 @@ AF_DCMotor XMotor(1); //declare which motors are attached to which outlets on th
 AF_DCMotor YMotor(2);
 AF_DCMotor ZMotor(3);
 
-float healthyContact = 0;      // number of times a healthy contact was made. based on circuit being closed.
-float unhealthyContact = 0;    // number of times an unhealthy contact was made.
-float numberOfDrops = 0;       // number of times the drone was lowered.
+float healthyContact = 0.0;      // number of times a healthy contact was made. based on circuit being closed.
+float unhealthyContact = 0.0;    // number of times an unhealthy contact was made.
+float numberOfDrops = 0.0;       // number of times the drone was lowered.
 float ContactEfficiency = 0.0; // Contact efficiency
 float batteryChargeTimeElapsed = 0.0;
 float batteryDischargeTimeElapsed = 0.0;
@@ -92,16 +92,10 @@ void setup()
 void loop()
 {
   ProgramRuntime.start();
-  // Check if rig is initialised
-  // if (rigInit == false)
-  // {
-  //   initialiseRig();
-  //   Serial.print("Rig has initialised to: ");
-  //   Serial.println(rigInit);
-  //   rigCycle = true;
-  // }
-  initialiseRig();
+
+  InitialiseRig();
   RigCoordinates();
+  BatteryStatus();
   // Cycle while rig cycle is true
   while (numberOfProgramCycles < 5)
   {
@@ -109,7 +103,7 @@ void loop()
     numberOfProgramCycles++;
     if (numberOfProgramCycles == 3)
     {
-      initialiseRig();
+      InitialiseRig();
       BatteryStatus();
     }
     Serial.print("Program cycle: ");
@@ -152,45 +146,15 @@ void RigCoordinates()
 }
 
 /*#################### Initialize Rig Section ######################*/
-void initialiseRig()
+void InitialiseRig()
 {
-  initialiseZAxis();
-  initialiseXAxis();
-  initialiseYAxis();
-  // if ((ZAxisInit == true) && (XAxisInit == true) && (YAxisInit == true))
-  // {
-  //   rigInit = true;
-  //   Serial.println("Rig has initialised to true");
-  // }
-  // if (ZAxisInit == false)
-  // {
-  //   Serial.print("Z axis has initialised to: ");
-  //   Serial.println(ZAxisInit);
-  //   initialiseZAxis();
-  //   ZAxisInit = true;
-  //   Serial.print("Z axis is now: ");
-  //   Serial.println(ZAxisInit);
-  // }
-  // if (XAxisInit == false)
-  // {
-  //   Serial.print("X axis has initialised to: ");
-  //   Serial.println(XAxisInit);
-  //   initialiseXAxis();
-  //   Serial.print("Z axis is now: ");
-  //   Serial.println(XAxisInit);
-  // }
-  // if (YAxisInit == false)
-  // {
-  //   Serial.print("Y axis has initialised to: ");
-  //   Serial.println(YAxisInit);
-  //   initialiseYAxis();
-  //   Serial.print("Y axis is now: ");
-  //   Serial.println(YAxisInit);
-  // }
+  InitialiseZAxis();
+  InitialiseXAxis();
+  InitialiseYAxis();
 }
 
 // initializes Z axis using Dlimit and Zlimit switches
-void initialiseZAxis()
+void InitialiseZAxis()
 {
   int ZUpperLimit = digitalRead(ZLimit);
   while (digitalRead(ZLimit) == HIGH)
@@ -225,7 +189,7 @@ void initialiseZAxis()
 }
 
 // initializes X axis using Zlimit switch
-void initialiseXAxis()
+void InitialiseXAxis()
 {
   int XRightLimit = digitalRead(XLimit);
   if (XAxisInit == false)
@@ -249,7 +213,7 @@ void initialiseXAxis()
   }
 }
 
-void initialiseYAxis()
+void InitialiseYAxis()
 {
   int YBackLimit = digitalRead(YLimit);
   if (YAxisInit == false)
