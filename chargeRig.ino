@@ -10,12 +10,16 @@
 #define ChargeContact A1
 #define VOLT_PIN_BAT A0
 
+// discharge motor servo assignment
 Servo myServo;
-StopWatch clock;
-StopWatch ProgramRuntime;
-StopWatch BatteryChargeTime;
-StopWatch BatteryDischargeTime;
 
+// stopwatches
+StopWatch clock;
+StopWatch ProgramRuntime(StopWatch::MINUTES);
+StopWatch BatteryChargeTime(StopWatch::MINUTES);
+StopWatch BatteryDischargeTime(StopWatch::MINUTES);
+
+// DC motor assignment
 AF_DCMotor XMotor(1); //declare which motors are attached to which outlets on the motor shield
 AF_DCMotor YMotor(2);
 AF_DCMotor ZMotor(3);
@@ -89,13 +93,14 @@ void loop()
 {
   ProgramRuntime.start();
   // Check if rig is initialised
-  if (rigInit == false)
-  {
-    initialiseRig();
-    Serial.print("Rig has initialised to: ");
-    Serial.println(rigInit);
-    rigCycle = true;
-  }
+  // if (rigInit == false)
+  // {
+  //   initialiseRig();
+  //   Serial.print("Rig has initialised to: ");
+  //   Serial.println(rigInit);
+  //   rigCycle = true;
+  // }
+  initialiseRig();
   RigCoordinates();
   // Cycle while rig cycle is true
   while (numberOfProgramCycles < 5)
@@ -104,25 +109,22 @@ void loop()
     numberOfProgramCycles++;
     if (numberOfProgramCycles == 3)
     {
+      initialiseRig();
       BatteryStatus();
     }
     Serial.print("Program cycle: ");
     Serial.println(numberOfProgramCycles);
   }
-  rigCycle = false;
-
-  ProgramRuntime.elapsed();
+  rigCycle = false; 
   Serial.print("Program run time in minutes: ");
-  Serial.println(ProgramRuntime.MINUTES);
+  Serial.println(ProgramRuntime.elapsed());
   ProgramRuntime.stop();
   // program ends
-  if ((rigInit == true) && (rigCycle == false))
+  if (rigCycle == false)
   {
     Serial.println("###################################");
-    Serial.print("Rig cylce was completed in seconds: ");
-    Serial.println(ProgramRuntime.SECONDS);
     Serial.print("In minutes: ");
-    Serial.println(ProgramRuntime.MINUTES);
+    Serial.println(ProgramRuntime.elapsed());
     Serial.print("Number of successful contacts made: ");
     Serial.println(healthyContact);
     Serial.print("Number of Cycles where X and Y was changed: ");
@@ -152,36 +154,39 @@ void RigCoordinates()
 /*#################### Initialize Rig Section ######################*/
 void initialiseRig()
 {
-  if ((ZAxisInit == true) && (XAxisInit == true) && (YAxisInit == true))
-  {
-    rigInit = true;
-    Serial.println("Rig has initialised to true");
-  }
-  if (ZAxisInit == false)
-  {
-    Serial.print("Z axis has initialised to: ");
-    Serial.println(ZAxisInit);
-    initialiseZAxis();
-    ZAxisInit = true;
-    Serial.print("Z axis is now: ");
-    Serial.println(ZAxisInit);
-  }
-  if (XAxisInit == false)
-  {
-    Serial.print("X axis has initialised to: ");
-    Serial.println(XAxisInit);
-    initialiseXAxis();
-    Serial.print("Z axis is now: ");
-    Serial.println(XAxisInit);
-  }
-  if (YAxisInit == false)
-  {
-    Serial.print("Y axis has initialised to: ");
-    Serial.println(YAxisInit);
-    initialiseYAxis();
-    Serial.print("Y axis is now: ");
-    Serial.println(YAxisInit);
-  }
+  initialiseZAxis();
+  initialiseXAxis();
+  initialiseYAxis();
+  // if ((ZAxisInit == true) && (XAxisInit == true) && (YAxisInit == true))
+  // {
+  //   rigInit = true;
+  //   Serial.println("Rig has initialised to true");
+  // }
+  // if (ZAxisInit == false)
+  // {
+  //   Serial.print("Z axis has initialised to: ");
+  //   Serial.println(ZAxisInit);
+  //   initialiseZAxis();
+  //   ZAxisInit = true;
+  //   Serial.print("Z axis is now: ");
+  //   Serial.println(ZAxisInit);
+  // }
+  // if (XAxisInit == false)
+  // {
+  //   Serial.print("X axis has initialised to: ");
+  //   Serial.println(XAxisInit);
+  //   initialiseXAxis();
+  //   Serial.print("Z axis is now: ");
+  //   Serial.println(XAxisInit);
+  // }
+  // if (YAxisInit == false)
+  // {
+  //   Serial.print("Y axis has initialised to: ");
+  //   Serial.println(YAxisInit);
+  //   initialiseYAxis();
+  //   Serial.print("Y axis is now: ");
+  //   Serial.println(YAxisInit);
+  // }
 }
 
 // initializes Z axis using Dlimit and Zlimit switches
@@ -317,14 +322,14 @@ void DroneDropCycle()
 // lower drone onto the charging rail
 void DroneDrop()
 {
-  float rasiedVoltage = voltageCheck(VOLT_PIN_BAT);
+  float raisedVoltage = voltageCheck(VOLT_PIN_BAT);
   int DLowerLimit = digitalRead(DLimit);
   while (digitalRead(DLimit) == HIGH)
   {
     ZMotor.run(FORWARD);
   }
   ZMotor.run(RELEASE);
-  CycleCount(rasiedVoltage);
+  CycleCount(raisedVoltage);
 }
 
 // raise Drone from the rail.
@@ -338,17 +343,19 @@ void DroneRaise()
 // Counts the number of cylces where there was good contact.
 void CycleCount(float raisedVoltage)
 {
-  float ContactVoltage = voltageCheck(VOLT_PIN_BAT);
-  delay(1000);
-  Serial.print("Rasied voltage: ");
+  float ContactVoltage;
+  for(int i =0; i<500; i++ ){
+    ContactVoltage += voltageCheck(VOLT_PIN_BAT);
+  }
+  Serial.print("Raised voltage: ");
   Serial.println(raisedVoltage);
   Serial.print("Contact volatge: ");
-  Serial.println(ContactVoltage);
+  Serial.println(ContactVoltage/500);
   if (ContactVoltage > raisedVoltage)
   {
     healthyContact++;
   }
-  else if (ContactVoltage == raisedVoltage)
+  else if (ContactVoltage < raisedVoltage)
   {
     unhealthyContact++;
     UnhealthyContactCoorsX[numberOfCycles] = Xcoordinates[numberOfCycles];
@@ -413,8 +420,8 @@ void BatteryStatus()
     Serial.print("Battery voltage equals voltage maximum, discharge sequence initiated: ");
     Serial.println(batVoltage);
     dischargeInitialization();
+    batteryDischargeTimeElapsed = BatteryChargeTime.elapsed();
     BatteryDischargeTime.stop();
-    batteryDischargeTimeElapsed = BatteryChargeTime.MINUTES;
   }
 
   if (batVoltage < voltageMaximum)
@@ -423,9 +430,8 @@ void BatteryStatus()
     DroneDrop();
     while (voltageCheck(VOLT_PIN_BAT) < voltageMaximum)
     {
-      float checkCharge = voltageCheck(VOLT_PIN_BAT);
       Serial.print("Charging battery, voltage reading: ");
-      Serial.println(checkCharge);
+      Serial.println(voltageCheck(VOLT_PIN_BAT));
     }
     
     batteryChargeTimeElapsed = BatteryChargeTime.elapsed();
@@ -458,7 +464,6 @@ void DischargeBankInit()
 // Function to discharge the battery
 void DischargeBankControl()
 {
-  float voltAverage = voltageCheck(VOLT_PIN_BAT);
   do
   {
     Serial.println("Discharging");
@@ -470,5 +475,5 @@ void DischargeBankControl()
 void DischargeBankShutdown()
 {
   myServo.write(0);
-  Serial.println("Shut down load bank, discharged set to true");
+  Serial.println("Shut down load bank");
 }
